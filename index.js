@@ -1,23 +1,21 @@
-// Import the dotenv package
-require('dotenv').config(); 
-
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const { Configuration, OpenAIApi } = require('openai');
+const { OpenAI } = require('openai');  // Import OpenAI directly
 const langdetect = require('langdetect');
 
 const app = express();
 const port = 3000;
 
-// Set up OpenAI API
-const openai = new OpenAIApi(new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,  // Use OpenAI API key from the .env file
-}));
+// Initialize OpenAI API client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,  // Use your OpenAI API key here
+});
 
-// Set up WhatsApp Business API credentials from the .env file
-const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL;
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+// Set up WhatsApp Business API credentials
+const WHATSAPP_API_URL = 'https://graph.facebook.com/v13.0/your-whatsapp-phone-number-id/messages';
+const ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;  // Replace with your Facebook access token
 
 // Middleware to parse incoming JSON requests
 app.use(bodyParser.json());
@@ -30,14 +28,14 @@ function detectLanguage(text) {
 // Function to translate the text using OpenAI GPT
 async function translateText(text, targetLanguage) {
     const prompt = `Translate this text to ${targetLanguage}: ${text}`;
-    const response = await openai.createCompletion({
-        model: "gpt-4",  // You can use GPT-3.5 or GPT-4 depending on your preference
+    const response = await openai.completions.create({
+        model: 'text-davinci-003',  // You can use a different model if needed
         prompt: prompt,
         max_tokens: 200,
         temperature: 0.3
     });
 
-    return response.data.choices[0].text.trim();
+    return response.choices[0].text.trim();
 }
 
 // Function to send a message back to WhatsApp
@@ -103,7 +101,7 @@ app.get('/webhook', (req, res) => {
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    if (mode && token === process.env.VERIFICATION_TOKEN) {  // Use the verification token from the .env file
+    if (mode && token === process.env.VERIFY_TOKEN) {  // Replace 'your-verification-token' with your actual token
         res.status(200).send(challenge);
     } else {
         res.status(403).send('Verification failed');
