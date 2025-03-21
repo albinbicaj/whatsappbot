@@ -39,25 +39,12 @@ const translateText = async (text, targetLang) => {
 
 // Webhook Verification (for Facebook to verify your webhook URL)
 app.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
-
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-
-    if (mode && token) {
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log("Webhook Verified Successfully!");
-            res.status(200).send(challenge);
-        } else {
-            console.log("Invalid verification token");
-            res.sendStatus(403);
-        }
+    if (req.query['hub.verify_token'] === VERIFY_TOKEN) {
+        res.send(req.query['hub.challenge']);
     } else {
-        res.sendStatus(400);
+        res.send('Invalid verification token');
     }
 });
-
 
 // Handle Incoming Messages
 app.post('/webhook', async (req, res) => {
